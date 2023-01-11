@@ -1,28 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.2">Jekyll</generator><link href="https://caisar-platform.github.io/website/feed.xml" rel="self" type="application/atom+xml" /><link href="https://caisar-platform.github.io/website/" rel="alternate" type="text/html" /><updated>2023-01-11T16:19:11+00:00</updated><id>https://caisar-platform.github.io/website/feed.xml</id><title type="html">CAISAR Website</title><subtitle>Website for the CAISAR platform</subtitle><entry><title type="html">Release of the technical paper</title><link href="https://caisar-platform.github.io/website/2022/06/02/news.html" rel="alternate" type="text/html" title="Release of the technical paper" /><published>2022-06-02T00:00:00+00:00</published><updated>2022-06-02T00:00:00+00:00</updated><id>https://caisar-platform.github.io/website/2022/06/02/news</id><content type="html" xml:base="https://caisar-platform.github.io/website/2022/06/02/news.html"><![CDATA[<h1 id="caisars-technical-report">CAISAR’s technical report</h1>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.2">Jekyll</generator><link href="https://caisar-platform.github.io/website/feed.xml" rel="self" type="application/atom+xml" /><link href="https://caisar-platform.github.io/website/" rel="alternate" type="text/html" /><updated>2023-01-11T16:39:23+00:00</updated><id>https://caisar-platform.github.io/website/feed.xml</id><title type="html">CAISAR Website</title><subtitle>Website for the CAISAR platform</subtitle><entry><title type="html">Release of the technical paper</title><link href="https://caisar-platform.github.io/website/2022/06/02/news.html" rel="alternate" type="text/html" title="Release of the technical paper" /><published>2022-06-02T00:00:00+00:00</published><updated>2022-06-02T00:00:00+00:00</updated><id>https://caisar-platform.github.io/website/2022/06/02/news</id><content type="html" xml:base="https://caisar-platform.github.io/website/2022/06/02/news.html"><![CDATA[<h1 id="caisars-technical-report">CAISAR’s technical report</h1>
 
 <p>We are delighted to release CAISAR’s technical report,
-available on <a href="https://hal.archives-ouvertes.fr/view/index/docid/3687211">HAL</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[CAISAR’s technical report]]></summary></entry><entry><title type="html">Open positions</title><link href="https://caisar-platform.github.io/website/2022/06/01/positions.html" rel="alternate" type="text/html" title="Open positions" /><published>2022-06-01T00:00:00+00:00</published><updated>2022-06-01T00:00:00+00:00</updated><id>https://caisar-platform.github.io/website/2022/06/01/positions</id><content type="html" xml:base="https://caisar-platform.github.io/website/2022/06/01/positions.html"><![CDATA[<h1 id="open-positions">Open positions</h1>
-
-<p>We are looking for talented interns, PhD students and
-post-docs! Here are our current open offers:</p>
-
-<ul>
-  <li><a href="/website/assets/documents/positions/caisar_coverage.pdf">Embedding testing as logical constraints</a></li>
-  <li><a href="/website/assets/documents/positions/caisar_simulator_specs.pdf">Simulator as a specification</a></li>
-</ul>
-
-<h1 id="application-modalities">Application modalities</h1>
-
-<p>Our field is at the crossroads of formal verification and artificial
-intelligence.
-As it is not realistic to be expert in both fields, we encourage candidates that do not meet the full qualification requirements to apply nonetheless.
-The candidate will be monitored by at least two research engineers of the team.
-If you are interested in this internship, please send <strong>by email</strong> to one of the person listed on the <a href="/website/contact/">contact page</a> an application containing:</p>
-<ul>
-  <li>your resume;</li>
-  <li>a cover letter indicating how your curriculum and experience match the qualifications expected, and how you would plan to contribute to the project;</li>
-  <li>at least your bachelor and master 1 transcripts;</li>
-  <li>the contact details of two persons (at least one academic) who can be contacted to provide references.</li>
-</ul>
-
-<p>Applications are welcomed until the position is filled. Please note that the administrative processing may take up to 3 months, so we strongly encourage you to apply diligently and answer as quick as possible when prompted with administrative documents.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Open positions]]></summary></entry></feed>
+available on <a href="https://hal.archives-ouvertes.fr/view/index/docid/3687211">HAL</a>.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[CAISAR’s technical report]]></summary></entry></feed>
