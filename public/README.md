@@ -38,3 +38,10 @@ All CSS is dealt with using the bulma CSS library in
 
 Continuous Integration is made such that any successful
 pipeline will push the new version of the website.
+
+# Current deployment
+
+The website is served through our own gitlab instance (laiser-websites/caisar-website), and on a github page (caisar-platform.github.io/website). The latter is a temporary solution, as we are waiting for our DNS.
+
+Both website are build with different options, detailed in
+the `.gitlab-ci.yml`.
