@@ -69,35 +69,45 @@ document.addEventListener('DOMContentLoaded', () => {
 			is-inline-block">
 	<img src="/website/assets/images/caisar-logo.png">
 		</figure>
-          <p class="subtitle">
+          <div class="subtitle">
             A Platform for Characterizing Artificial Intelligence Safety and Robustness
-          </p>
+          </div>
       </div>
     </section>
-    <div class="content">
-      <p>The trustworthiness of an AI-based software is a wide-reaching term covering several key aspects. As an example:</p>
+    <div class="content container">
+      <h1 class="title">Trustworthiness of AI-based systems</h1>
+<p>
+The <strong>trustworthiness of an AI-based software</strong> is a wide-reaching term covering several key aspects. As an example: 
 <ul>
-  <li>intelligibility, e.g., through explainability and interpretability of research,</li>
-  <li>security, e.g., through the resistance to, the ability to recover from, or to remain in a degraded but acceptable state during malicious attacks</li>
-  <li>fairness, e.g., through the absence of bias according to social or biological attributes</li>
+	<li>intelligibility, e.g., through explainability and interpretability of research, </li>
+	<li>security, e.g., through the resistance to, the ability to recover from, or to remain in a degraded but acceptable state during malicious attacks</li>
+	<li>fairness, e.g., through the absence of bias according to social or biological attributes </li>
 </ul>
+</p>
 
-<p>CAISAR is an open-source platform under active development that focuses on another paramount aspect of trustworthiness: Characterization of AI systems’ Robustness and Safety. CAISAR provides a unified entry point for defining verification problems by using WhyML, the mature and expressive language of the Why3 verification platform. Moreover, CAISAR orchestrates and composes state-of-the-art machine learning verification tools which, individually, are not able to efficiently handle all problems but, collectively, can cover a growing number of properties. Our aim is to assist, on the one hand, the V&amp;V process by reducing the burden of choosing the methodology tailored to a given verification problem, and on the other hand the tools developers by factorizing useful features-visualization, report generation, property description-in one platform.</p>
+<p>
+CAISAR is an <strong>open-source platform</strong> under active development that focuses on another paramount aspect of trustworthiness: the Characterization of AI systems' Robustness and Safety. CAISAR provides a unified entry point for defining verification problems by using <strong>WhyML, the mature and expressive language of the Why3 verification platform</strong>. Moreover, CAISAR orchestrates and composes state-of-the-art machine learning verification tools which, individually, are not able to efficiently handle all problems but, collectively, can cover a growing number of properties. Our aim is to assist, on the one hand, the V&V process by reducing the burden of choosing the methodology tailored to a given verification problem, and on the other hand the tools developers by factorizing useful features-visualization, report generation, property description-in one platform. 
+</p>
 
-<p>In short, CAISAR is:</p>
+<h1 class="title">CAISAR in short</h1>
+<p>
 <ul>
-  <li>Aimed at AI in the general sense: while the current frenzy of AI trustworthiness is focused on the most recent trend, i.e., neural networks, our industrial partners can also use other types of AI (e.g. support vector machines) in their products. This is why CAISAR targets a wider range of AI systems.</li>
-  <li>Modular and extensible: written in the functional language OCaml, adding a verification, analysis or testing software to CAISAR’s toolsuit is made easier through a unified interface, and an instantiation guided by data-types.</li>
-  <li>Maintainable: functional programming provides easy mathematical reading, lowering the entry barrier for understanding the inner workings of CAISAR. Strong typing also minimizes errors with informative messages.</li>
-  <li>Standard oriented: by relying on AI standards (ONNX, NNnet) and formal methods standards (SMT, CP), CAISAR maximizes the potential for inclusiveness. Any tool that supports these standards in their communications is a potential addition to the CAISAR platform. An internal representation for property language and AI representation helps reinforce the synergy between the different tools, where one analyser can rely on, and complement, the partial output of another.</li>
-  <li>Open-source: Our vision of CAISAR is collaborative in essence. To encourage cooperation and build a community of trust-minded entities, an easy access to the platform, supplied with documentations and tutorials, is our priority.</li>
+	<li><strong>Aimed at AI in the general sense:</strong> while the current frenzy of AI trustworthiness is focused on the most recent trend, i.e., neural networks, our industrial partners can also use other types of AI (e.g. support vector machines) in their products. This is why CAISAR targets a wider range of AI systems. </li>
+	<li><strong>Modular and extensible:</strong> written in the functional language OCaml, adding a verification, analysis or testing software to CAISAR's toolsuit is made easier through a unified interface, and an instantiation guided by data-types.</li>
+	<li><strong>Maintainable:</strong> functional programming provides easy mathematical reading, lowering the entry barrier for understanding the inner workings of CAISAR. Strong typing also minimizes errors with informative messages.</li>
+	<li><strong>Standard oriented:</strong> by relying on AI standards (ONNX, NNnet) and formal methods standards (SMT, CP), CAISAR maximizes the potential for inclusiveness. Any tool that supports these standards in their communications is a potential addition to the CAISAR platform. An internal representation for property language and AI representation helps reinforce the synergy between the different tools, where one analyser can rely on, and complement, the partial output of another. </li>
+	<li><strong>Open-source:</strong> Our vision of CAISAR is collaborative in essence. To encourage cooperation and build a community of trust-minded entities, an easy access to the platform, supplied with documentations and tutorials, is our priority.</li>
 </ul>
+</p>
 
-<p>See our supported techniques <a href="/website/supported">here</a>.</p>
+<p>
+See our supported techniques <a href="/website/supported">here</a>.
+</p>
 
-<h2 id="publications">Publications</h2>
-
-<p>Here is a list of publications featuring CAISAR.</p>
+<h1 class="title">Publications</h1>
+<p>
+Here is a list of publications featuring CAISAR.
+</p>
 
 <div class="tile is-ancestor">
  <div class="tile is-parent is-vertical">
@@ -106,10 +116,10 @@ document.addEventListener('DOMContentLoaded', () => {
      CAISAR: A platform for Characterizing
      Artificial Intelligence Safety and Robustness
     </p> 
-<div>
-        <p>Cite with <a href="/website/assets/bibtex/caisar.bib">bibtex</a>, download the
-<a href="https://hal.archives-ouvertes.fr/hal-03687211">PDF</a></p>
-      </div>
+	<div class="buttons">
+	<a href="/website/assets/bibtex/caisar.bib" target="_blank"><button class="button is-primary is-outlined is-responsive">Bibtex</button></a>
+	<a href="https://hal.archives-ouvertes.fr/hal-03687211" target="_blank"><button class="button is-primary is-outlined is-responsive">PDF</button></a>
+	</div>
   </div>
  </div>
 </div>
