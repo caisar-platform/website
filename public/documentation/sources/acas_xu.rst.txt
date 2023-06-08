@@ -1,0 +1,360 @@
+.. _acas_xu:
+
+Functional properties of ACAS-Xu
+********************************
+
+ACAS-Xu stands for Aircraft Collision Avoidance System. Introduced for instance
+in [Manfredi2016]_, it is a specification of a program which aim to output
+signals for an aircraft in a situation where there is a potential for collision.
+In the rest of this tutorial, we will use the flavour ACAS-Xu defined in
+[Katz2017]_, where the authors aim to verify a neural network implementing part
+of the ACAS-Xu specification. Its low dimensionality and well defined semantics
+make it a *de facto* benchmark for machine learning verification.
+
+Use case presentation
+=====================
+
+The system considers a 2D plane with two entities: the monitored airplane (the
+"ownship") and an incoming airplane (the "intruder").
+
+.. image:: _static/media/acas_xu.png
+   :scale: 50 %
+   :alt: A schematic with two aircrafts, seen from above, displaying the relative angles of their trajectories
+   :align: center
+
+In the original implementation, the system state has seven inputs:
+
+* :math:`v_{own}`: speed of ownship
+* :math:`v_{int}`: speed of intruder
+* :math:`\rho`: distance from ownship to intruder
+* :math:`\theta`: angle to intruder relative to ownship heading direction
+* :math:`\psi`: heading angle of intruder relative to ownship heading direction
+* :math:`\tau`: time until vertical separation
+* :math:`a_{prev}`: previous advisory
+
+It has five outputs, that correspond to the different direction advisories the
+system can give:
+
+* :math:`COC`: Clear Of Conflict
+* :math:`WL`: Weak Left
+* :math:`SL`: Strong Left
+* :math:`WR`: Weak Right
+* :math:`SR`: Strong Right
+
+In the original paper, the authors consider :math:`45` neural networks, for
+several values of :math:`\tau` and :math:`a_{prev}`, that operate on five inputs
+only while maintaining the same number of outputs. We will consider five-inputs
+networks in the remaining of this example.
+
+Properties
+----------
+
+There are several functional properties one may want to verify on this system,
+for instance:
+
+* Guarantee that the system will never output COC advisory when the intruder is
+  nearby,
+* Guarantee that the system will never output an advisory that may result in a
+  collision,
+* Guarantee that the system will not output a strong advisory where a weak
+  variant would be enough.
+
+Authors of [Katz2017]_ propose ten properties to verify. We will reproduce the
+first and third properties here, and then show how to use CAISAR for verifying
+whether a given neural network respects them.
+
+**Property** :math:`\phi_1`
+
+* **Definition.**
+  If the intruder is distant and is significantly slower than
+  the ownship, the score of a COC advisory will always be below a certain fixed
+  threshold.
+
+* **Input constraints:**
+
+   * :math:`\rho \geq 55947.691`,
+   * :math:`v_{own} \geq 1145`,
+   * :math:`v_{int} \leq 60`.
+
+* **Desired output property:**
+
+   * :math:`COC \leq 1500`.
+
+**Property** :math:`\phi_3`
+
+* **Definition.**
+  If the intruder is directly ahead and is moving towards the
+  ownship, the score for COC will not be minimal.
+
+* **Input constraints:**
+
+   * :math:`1500 \leq \rho \leq 1800`,
+   * :math:`-0.06 \leq \theta \leq 0.06`,
+   * :math:`\psi \geq 3.10`,
+   * :math:`v_{own} \geq 980`,
+   * :math:`v_{int} \geq 960`.
+
+* **Desired output property:**
+
+   * :math:`COC` is not the minimal score.
+
+Modelling the problem using WhyML
+---------------------------------
+
+The first step for verifying anything with CAISAR is to write a specification
+file that describe the problem to verify as a so-called *theory*. A theory can
+be seen as a namespace inside which are defined logical terms, formulas and
+verification goals. In particular, being based on the `Why3
+<https://why3.lri.fr>`_ platform for deductive program verification, CAISAR
+supports the Why3 specification language
+`WhyML <https://why3.lri.fr/doc/syntaxref.html>`_, and inherits the Why3 standard
+library of logical theories (integer, float and real arithmetic, *etc.*) and
+basic programming data structures (arrays, queues, hash tables, *etc.*).
+
+Let us try to model the property :math:`\phi_1` defined earlier. We will call
+our theory ``ACASXU_P1``.
+
+We will need to write down some numerical values. As of now, CAISAR allows
+writing values using floating-point arithmetic only. Why3 defines a float type
+and the relevant arithmetic operations according to the IEEE floating-point
+standard in a theory, astutely called ``ieee_float``. Specifically, we will
+import the ``Float64`` sub-theory, that defines everything we need for 64-bit
+precision floating-point numbers. We thus import it in our theory using the
+``use`` keyword.
+
+Our file looks like this so far:
+
+.. code-block:: whyml
+
+   theory ACASXU_P1
+     use ieee_float.Float64
+   end
+
+We would like to verify our propety given a certain neural network. To do this,
+CAISAR extends the Why3 standard library for recognizing neural networks in ONNX
+and NNet formats. Given a file of such formats, CAISAR internally builds a
+theory named as the original neural network file, that contains the sub-theories
+``AsTuple`` and ``AsArray`` that provide logical symbols for describing the
+input-output interface of a neural network as tuples and array, respectively. We
+will only consider the ``AsTuple`` sub-theory for this tutorial.
+
+In particular, the theory built by CAISAR is equivalent to the following WhyML
+file:
+
+.. code-block:: whyml
+
+   theory NeuralNetworkFilename
+     theory AsTuple
+       type t
+       (* Tuple with as many elements as there are input *)
+       function nn_apply (t,_,...)
+       (* Tuple with as many elements as there are outputs *)
+         : (t,_,...)
+     end
+     (* Other stuff *)
+   end
+
+Note how the ``AsTuple`` theory defines the ``nn_apply`` function symbol that
+logically describes the input-output interface of a neural network using tuples.
+More importantly, CAISAR defines this function to take in input a tuple with as
+many elements as the inputs expected by the original neural network, and return
+a tuple with as many elements as the outputs provided by the original neural
+network.
+
+As our neural network takes five inputs and provides five outputs, adding ``use
+filename.AsTuple`` to our theory will provide a ``nn_apply`` function symbol
+that takes a five-elements tuple as input, and provides a five-elements tuple as
+output. Assuming we have a neural network named ``ACASXU_1_1.onnx``, the WhyML
+file looks like this:
+
+.. code-block:: whyml
+
+   theory ACASXU_P1
+     use ACASXU_1_1.AsTuple
+     use ieee_float.Float64
+   end
+
+Now is the time to define our verification goal, that will call ``P1_1_1`` for
+property :math:`\phi_1` on neural network :math:`N_{1,1}`.
+
+We first model the inputs of the neural network :math:`\rho, \theta, \psi,
+v_{own}, v_{int}` respectively as the floating-points constants :math:`x_i` for
+:math:`i \in [0..4]`. Moreover, we constraint these to the range of
+floating-point values each may take. According to the original authors, values
+were normalized during the training of the network, and so we adapt the values
+they provide in their `repository
+<https://github.com/NeuralNetworkVerification/Marabou/tree/master/resources/properties>`_.
+Then, we define the result of the application of ``net_apply`` on the inputs by
+taking advantage of the WhyML pattern-matching, and define the output constraint
+we want to enforce on the floating-point constant :math:`y_0` that we use to
+model the advisory *COC*.
+
+The final WhyML file looks like this:
+
+.. code-block:: whyml
+
+  theory ACASXU_P1
+    use ACASXU_1_1.AsTuple
+    use ieee_float.Float64
+
+    goal P1_1_1: forall x0 x1 x2 x3 x4.
+       (0.5999999999999999777955395074968691915273666381835937500000000000:t) .<= x0 .<= (0.6798577687000000313588543576770462095737457275390625000000000000:t) ->
+       (-0.5:t) .<= x1 .<= (0.5:t) ->
+       (-0.5:t) .<= x2 .<= (0.5:t) ->
+       (0.4500000000000000111022302462515654042363166809082031250000000000:t) .<= x3 .<= (0.5:t) ->
+       (-0.5:t) .<= x4 .<= (-0.4500000000000000111022302462515654042363166809082031250000000000:t) ->
+       let (y0, _, _, _, _) = nn_apply x0 x1 x2 x3 x4 in
+       y0 .<= (3.9911256458999999630066213285317644476890563964843750000000000000:t)
+  end
+
+This file is available, as is, under the ``/examples/acasxu/`` folder as
+`property_1.why
+<https://git.frama-c.com/pub/caisar/-/blob/master/examples/acasxu/property_1.why>`_.
+The corresponding neural network in ONNX format is available under the
+``/examples/acasxu/nets/onnx/`` folder as `ACASXU_1_1.onnx
+<https://git.frama-c.com/pub/caisar/-/blob/master/examples/acasxu/nets/onnx/ACASXU_1_1.onnx>`_.
+
+
+Verifying the property with CAISAR
+----------------------------------
+
+Once formalized, the specified property can be assessed by using CAISAR. We will
+use the *open-source* provers CAISAR supports for verifying properties of neural
+networks so to take advantage of the federating approach: whenever one prover
+cannot provide an answer, another may instead. In particular, we will use
+`Marabou <https://github.com/NeuralNetworkVerification/Marabou>`_ and `nnenum
+<https://github.com/stanleybak/nnenum>`_.
+
+Assuming the prover locations are available in ``PATH``, the following are the
+CAISAR verification invocations using Marabou first and nnenum afterwords, for
+verifying the ACAS-Xu property :math:`\phi_1`:
+
+.. code-block:: console
+
+    $ caisar verify --prover Marabou -L examples/acasxu/nets/onnx --format whyml examples/acasxu/property_1.why -t 10m
+    [caisar] Goal P1_1_1: Timeout
+
+.. code-block:: console
+
+    $ caisar verify --prover nnenum -L examples/acasxu/nets/onnx --format whyml examples/acasxu/property_1.why -t 10m
+    [caisar] Goal P1_1_1: Valid
+
+Note that the previous commands set the verification time limit to 10 minutes
+(*cf.* ``-t`` option), and the additional location ``examples/acasxu/nets/onnx``
+(*cf.* ``-L`` option) for letting CAISAR correctly locate the neural network
+file ``ACASXU_1_1.onnx`` that is used by the ``ACASXU_P1`` theory in
+``property_1.why``.
+
+Under the hood, CAISAR first translates each goal into a compatible form for the
+targeted provers, then calls the provers on them, and finally interprets and
+post-processes the prover results for displaying them in a coherent form to the
+user.
+
+Marabou is not able to prove the property valid in the specified time limit,
+while nnenum does. In general, the result of a CAISAR verification is typically
+either ``Valid``, ``Invalid``, ``Unknown`` or ``Timeout``. CAISAR may output
+``Failure`` whenever the verification process fails for whatever reason
+(typically, a prover internal failure).
+
+Using more advanced WhyML constructs
+------------------------------------
+
+Let us model the ACAS-Xu property :math:`\phi_3`, and verify it for the neural
+networks :math:`N_{1,1}` and :math:`N_{2,7}` [Katz2017]_.
+
+From the modelling standpoint, the main evident difference concerns the desired
+output property, meaining that *COC* should not be the minimal value. A
+straightforward way to express this property is that the corresponding
+floating-point constant :math:`y_0` is greater than or equal to at least one of
+the other five outputs. This can be formalized in first-order logic as a
+disjunction of clauses, that can be directly encoded into WhyML as follows:
+
+.. code-block:: whyml
+
+    y0 .>= y1 \/ y0 .>= y2 \/ y0 .>= y3 \/ y0 .>= y4
+
+The delicate point is how to model the same property for two different neural
+networks. Of course, we could define a theory with two identical but distinct
+verification goals or two entirely distinct theories in a same WhyML file.
+However, these two solutions are not advisable in terms of clarity and
+maintainability.
+
+Reassuringly enough, WhyML provides all necessary features to come up with a
+better solution. First, WhyML allows for naming used (sub-)theories in order to
+distinguish identical logic symbols coming from different theories. This is
+critical for identifying the correct ``nn_apply`` symbols in the two
+verification goals we will define. Second, WhyML allows for the hypotheses on
+the floating-point constants modelling the neural network inputs to be exported
+from the verification goal into the theory general context as axioms.
+
+In the end, the WhyML file looks like this:
+
+.. code-block:: whyml
+
+  theory ACASXU_P3
+    use ACASXU_1_1.AsTuple as N11
+    use ACASXU_2_7.AsTuple as N27
+    use ieee_float.Float64
+
+    constant x0:t
+    constant x1:t
+    constant x2:t
+    constant x3:t
+    constant x4:t
+
+    axiom H0:
+       (-0.3035311560999999769272506000561406835913658142089843750000000000:t) .<= x0 .<= (-0.2985528118999999924731980627257144078612327575683593750000000000:t)
+
+    axiom H1:
+       (-0.0095492965999999998572000947660853853449225425720214843750000000:t) .<= x1 .<= (0.0095492965999999998572000947660853853449225425720214843750000000:t)
+
+    axiom H2:
+       (0.4933803236000000036476365039561642333865165710449218750000000000:t) .<= x2 .<= (0.5:t)
+
+    axiom H3:
+       (0.2999999999999999888977697537484345957636833190917968750000000000:t) .<= x3 .<= (0.5:t)
+
+    axiom H4:
+       (0.2999999999999999888977697537484345957636833190917968750000000000:t) .<= x4 .<= (0.5:t)
+
+    goal P3_1_1:
+       let (y0, y1, y2, y3, y4) = N11.nn_apply x0 x1 x2 x3 x4 in
+       y0 .>= y1 \/ y0 .>= y2 \/ y0 .>= y3 \/ y0 .>= y4
+
+    goal P3_2_7:
+       let (y0, y1, y2, y3, y4) = N27.nn_apply x0 x1 x2 x3 x4 in
+       y0 .>= y1 \/ y0 .>= y2 \/ y0 .>= y3 \/ y0 .>= y4
+  end
+
+Note how the two verification goals ``P3_1_1`` and ``P3_2_7`` are clearly almost
+identical, but for the ``nn_apply`` logic symbol used, identifying respectively
+the ``ACASXU_1_1.onnx`` and ``ACASXU_2_7.onnx`` neural networks.
+
+We can then verify the resulting verification problem as before:
+
+.. code-block:: console
+
+    $ caisar verify --prover Marabou -L examples/acasxu/nets/onnx --format whyml examples/acasxu/property_3.why -t 10m
+    [caisar] Goal P3_1_1: Timeout
+    [caisar] Goal P3_2_7: Valid
+
+.. code-block:: console
+
+    $ caisar verify --prover nnenum -L examples/acasxu/nets/onnx --format whyml examples/acasxu/property_3.why -t 10m
+    [caisar] Goal P3_1_1: Valid
+    [caisar] Goal P3_2_7: Valid
+
+It is interesting to remark that, since Marabou does not support disjunctive
+formulas, CAISAR first splits a disjunctive goal formula into conjunctive
+sub-goals, then calls Marabou on each sub-goal, and finally post-processes the
+sub-results to provide the final result corresponding to the original goal
+formula.
+
+
+.. [Manfredi2016] G. Manfredi and Y. Jestin, *An introduction to ACAS Xu and the
+   challenges ahead*, 2016 IEEE/AIAA 35th Digital Avionics Systems Conference
+   (DASC), 2016, pp. 1-9, doi: 10.1109/DASC.2016.7778055
+
+.. [Katz2017] Katz, G., Barrett, C., Dill, D.L., Julian, K., Kochenderfer, M.J.
+   (2017). *Reluplex: An Efficient SMT Solver for Verifying Deep Neural Networks.*
+   CAV 2017, doi: 10.1007/978-3-319-63387-9_5

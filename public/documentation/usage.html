@@ -1,0 +1,184 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>3. Using CAISAR &#8212; CAISAR 0.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="static/graphviz.css" />
+    <script data-url_root="./" id="documentation_options" src="static/documentation_options.js"></script>
+    <script src="static/jquery.js"></script>
+    <script src="static/underscore.js"></script>
+    <script src="static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="4. CAISAR by Examples" href="examples.html" />
+    <link rel="prev" title="2. Installation" href="installation.html" />
+   
+  <link rel="stylesheet" href="static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="using-caisar">
+<span id="usage"></span><h1><span class="section-number">3. </span>Using CAISAR<a class="headerlink" href="#using-caisar" title="Permalink to this headline">¶</a></h1>
+<section id="prover-registration">
+<h2><span class="section-number">3.1. </span>Prover registration<a class="headerlink" href="#prover-registration" title="Permalink to this headline">¶</a></h2>
+<p>CAISAR relies on external provers to work. You must install
+them first, then point CAISAR to their location. Please
+refer to each prover documentation to install them.</p>
+<p>Provers tend to be complex programs with multiple options.
+Some combination of options may be suited for one
+verification problem, while inefficient for another. As they
+also have different interface, it is also necessary to register
+their call in a way CAISAR can understand.
+To do so, you must register provers inside the <code class="docutils literal notranslate"><span class="pre">config/caisar-detection-data.conf</span></code> file.
+Each supported prover is registered by specifying the following fields:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">name</span></code>: the name under which CAISAR will know the prover</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">exec</span></code>: the prover’s executable name</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">alternative</span></code> (optional): an alternative configuration for the
+prover. To use it with CAISAR, use the option
+<code class="docutils literal notranslate"><span class="pre">--prover-altern</span></code>. Useful when you want to use the same
+prover on different problems.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">version_switch</span></code>: the command used to output the prover’s
+version</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">version_regexp</span></code>: a regular expression parsing the
+output of <code class="docutils literal notranslate"><span class="pre">version_switch</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">version_ok</span></code>: CAISAR supported version of the prover.
+Provers should only be used with their supported version.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">command</span></code>: the actual command CAISAR will send to the prover. There are a few builtin expressions provided by CAISAR:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">%f</span></code>: the generated property file sent to the prover</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">%t</span></code>: the timelimit value</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">%{nnet-onnx}</span></code>: the name of the neural network file</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">driver</span></code>: location of the CAISAR driver for the prover, if any</p></li>
+</ul>
+<p>Assuming you have installed a prover and you filled the
+<code class="docutils literal notranslate"><span class="pre">caisar-detection.conf</span></code> file, you can register the prover to CAISAR using the
+following command: <code class="docutils literal notranslate"><span class="pre">PATH=$PATH:/path/to/solver/executable</span> <span class="pre">caisar</span> <span class="pre">config</span> <span class="pre">-d</span></code>.</p>
+</section>
+<section id="property-verification">
+<h2><span class="section-number">3.2. </span>Property verification<a class="headerlink" href="#property-verification" title="Permalink to this headline">¶</a></h2>
+<p>A prominent use case of CAISAR is to model a specification for an artificial intelligence
+system, and to verify its validity for a given system.</p>
+<p>The modelling uses <a class="reference external" href="https://why3.lri.fr/doc/syntaxref.html">WhyML</a>,
+a typed first-order logic language.
+Example of WhyML are in the <a class="reference external" href="https://git.frama-c.com/pub/caisar/-/tree/master/examples/">source code</a>.
+You may also read the <a class="reference internal" href="examples.html#examples"><span class="std std-ref">CAISAR by Examples</span></a> section of this
+documentation to get a first grasp on using WhyML.</p>
+<p>Provided a file <cite>trust.why</cite> containing a goal to verify, the command <code class="docutils literal notranslate"><span class="pre">caisar</span> <span class="pre">verify</span> <span class="pre">--prover=PROVER</span> <span class="pre">trust.why</span></code>
+will verify the goals using the specified prover. A list of
+supported provers is available in <a class="reference internal" href="foreword.html#overalldesign"><span class="std std-ref">Overall Design</span></a>. The prover
+must already be registered by CAISAR. Currently, only one
+prover can be selected at a time; future work will allow
+selecting multiple provers and orchestrate verification
+strategies.
+Internally, CAISAR will translate the goals into a form that
+is acceptable by the targeted prover, generating a file (the
+<code class="docutils literal notranslate"><span class="pre">%f</span></code> defined in the previous section).</p>
+</section>
+<section id="built-in-properties">
+<h2><span class="section-number">3.3. </span>Built-in properties<a class="headerlink" href="#built-in-properties" title="Permalink to this headline">¶</a></h2>
+<p>In addition to all the theories provided by Why3, CAISAR
+provide additional theories that model commonly desirable properties for machine learning programs.
+All those predicates are located in the file <code class="docutils literal notranslate"><span class="pre">stdlib/caisar.mlw</span></code>.
+Among them are theories to describe classification datasets,
+local and global robustness around a neighborhood.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">CAISAR</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="foreword.html">1. Foreword</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">2. Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">3. Using CAISAR</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prover-registration">3.1. Prover registration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#property-verification">3.2. Property verification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#built-in-properties">3.3. Built-in properties</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">4. CAISAR by Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="genindex.html">5. Index</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="installation.html" title="previous chapter"><span class="section-number">2. </span>Installation</a></li>
+      <li>Next: <a href="examples.html" title="next chapter"><span class="section-number">4. </span>CAISAR by Examples</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, The CAISAR Development Team.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="sources/usage.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
