@@ -1,0 +1,15 @@
+.. _examples:
+
+CAISAR by Examples
+==================
+
+This page regroups some example use cases for CAISAR. All examples will describe
+the use case, the formalization using the WhyML specification language, and the
+CAISAR execution.
+
+.. toctree::
+   :maxdepth: 2
+   :caption: CAISAR by Examples:
+
+   acas_xu
+   mnist
