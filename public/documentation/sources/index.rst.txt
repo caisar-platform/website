@@ -18,8 +18,8 @@ The CAISAR Platform
   François Bobot,
   Julien Girard
 
-:Version: |version|, December 2022
-:Copyright: 2020--2022 CEA (Commissariat à l'énergie atomique et aux énergies alternatives)
+:Version: |version|, June 2023
+:Copyright: 2020--2023 CEA (Commissariat à l'énergie atomique et aux énergies alternatives)
 
 .. _Confiance.ai: https://www.confiance.ai/
 
