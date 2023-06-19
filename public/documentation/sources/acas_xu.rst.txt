@@ -8,7 +8,7 @@ in [Manfredi2016]_, it is a specification of a program which aim to output
 signals for an aircraft in a situation where there is a potential for collision.
 In the rest of this tutorial, we will use the flavour ACAS-Xu defined in
 [Katz2017]_, where the authors aim to verify a neural network implementing part
-of the ACAS-Xu specification. Its low dimensionality and well defined semantics
+of the ACAS-Xu specification. Its low dimensionality and well-defined semantics
 make it a *de facto* benchmark for machine learning verification.
 
 Use case presentation
@@ -19,7 +19,7 @@ The system considers a 2D plane with two entities: the monitored airplane (the
 
 .. image:: _static/media/acas_xu.png
    :scale: 50 %
-   :alt: A schematic with two aircrafts, seen from above, displaying the relative angles of their trajectories
+   :alt: A schematic with two aircraft, seen from above, displaying the relative angles of their trajectories
    :align: center
 
 In the original implementation, the system state has seven inputs:
@@ -111,6 +111,15 @@ supports the Why3 specification language
 library of logical theories (integer, float and real arithmetic, *etc.*) and
 basic programming data structures (arrays, queues, hash tables, *etc.*).
 
+Additionnaly, CAISAR extends WhyML by providing several builtins
+predicates and function symbols.
+The full extend of those additions will be documented in a future release.
+This example will use some of those undocumented extensions
+to display the capabilities of CAISAR; the wording "WhyML extensions" will be used when this happens.
+We believe those
+extensions are simple enough so that their meaning in the
+verification is transparent.
+
 Let us try to model the property :math:`\phi_1` defined earlier. We will call
 our theory ``ACASXU_P1``.
 
@@ -130,81 +139,88 @@ Our file looks like this so far:
      use ieee_float.Float64
    end
 
-We would like to verify our propety given a certain neural network. To do this,
-CAISAR extends the Why3 standard library for recognizing neural networks in ONNX
-and NNet formats. Given a file of such formats, CAISAR internally builds a
-theory named as the original neural network file, that contains the sub-theories
-``AsTuple`` and ``AsArray`` that provide logical symbols for describing the
-input-output interface of a neural network as tuples and array, respectively. We
-will only consider the ``AsTuple`` sub-theory for this tutorial.
+We would like to verify our property given a certain neural network. To do this,
+CAISAR provide WhyML extensions to recognize and apply
+neural networks in ONNX and NNet formats on vector inputs.
+Given a file of such formats, CAISAR is able to provide the following:
 
-In particular, the theory built by CAISAR is equivalent to the following WhyML
-file:
+* a logical symbol of type ``nn``, built using the ``read_neural_network`` function, of type ``string -> format -> nn``. The first argument is the path to the neural network file, ``format`` is either ``ONNX`` or ``NNet``, and ``nn`` is the type of the neural network in WhyML;
+* a function symbol that returns the output of the application of the neural network to a given input;
+* types and predicates to manipulate inputs vectors;
 
-.. code-block:: whyml
-
-   theory NeuralNetworkFilename
-     theory AsTuple
-       type t
-       (* Tuple with as many elements as there are input *)
-       function nn_apply (t,_,...)
-       (* Tuple with as many elements as there are outputs *)
-         : (t,_,...)
-     end
-     (* Other stuff *)
-   end
-
-Note how the ``AsTuple`` theory defines the ``nn_apply`` function symbol that
-logically describes the input-output interface of a neural network using tuples.
-More importantly, CAISAR defines this function to take in input a tuple with as
-many elements as the inputs expected by the original neural network, and return
-a tuple with as many elements as the outputs provided by the original neural
-network.
-
-As our neural network takes five inputs and provides five outputs, adding ``use
-filename.AsTuple`` to our theory will provide a ``nn_apply`` function symbol
-that takes a five-elements tuple as input, and provides a five-elements tuple as
-output. Assuming we have a neural network named ``ACASXU_1_1.onnx``, the WhyML
-file looks like this:
+The full reference for those WhyML extensions is available under the
+`stdlib/interpretation.mlw <https://git.frama-c.com/pub/caisar/-/blob/master/stdlib/interpretation.mlw>`_ file. To create a logical symbol for a neural network located in "nets/onnx/ACASXU_1_1.onnx", we can import the relevant theories in our file and use the ``read_neural_network`` function symbol like this:
 
 .. code-block:: whyml
 
    theory ACASXU_P1
-     use ACASXU_1_1.AsTuple
      use ieee_float.Float64
+     use interpretation.Vector
+     use interpretation.NeuralNetwork
+
+     constant nn_1_1: nn = read_neural_network "nets/onnx/ACASXU_1_1.onnx" ONNX
    end
 
 Now is the time to define our verification goal, that will call ``P1_1_1`` for
 property :math:`\phi_1` on neural network :math:`N_{1,1}`.
-
 We first model the inputs of the neural network :math:`\rho, \theta, \psi,
 v_{own}, v_{int}` respectively as the floating-points constants :math:`x_i` for
-:math:`i \in [0..4]`. Moreover, we constraint these to the range of
+:math:`i \in [0..4]`. Moreover, we constrain these to the range of
 floating-point values each may take. According to the original authors, values
 were normalized during the training of the network, and so we adapt the values
 they provide in their `repository
-<https://github.com/NeuralNetworkVerification/Marabou/tree/master/resources/properties>`_.
-Then, we define the result of the application of ``net_apply`` on the inputs by
-taking advantage of the WhyML pattern-matching, and define the output constraint
-we want to enforce on the floating-point constant :math:`y_0` that we use to
-model the advisory *COC*.
+<https://github.com/NeuralNetworkVerification/Marabou/tree/master/resources/properties>`_. Since we will manipulate integer indexes, we require the use of the ``int.Int`` Why3 library. We can write that as a predicate for clarity:
+
+.. code-block:: whyml
+
+  theory ACASXU_P1
+    use ieee_float.Float64
+    use int.Int
+    use interpretation.Vector
+    use interpretation.NeuralNetwork
+  
+    constant nn_1_1: nn = read_neural_network "nets/onnx/ACASXU_1_1.onnx" ONNX
+
+    predicate valid_input (i: vector t) =
+      (0.5999999999999999777955395074968691915273666381835937500000000000:t) .<= i[0] .<= (0.6798577687000000313588543576770462095737457275390625000000000000:t)
+      /\ (-0.5:t) .<= i[1] .<= (0.5:t)
+      /\ (-0.5:t) .<= i[2] .<= (0.5:t)
+      /\ (0.4500000000000000111022302462515654042363166809082031250000000000:t) .<= i[3] .<= (0.5:t)
+      /\ (-0.5:t) .<= i[4] .<= (-0.4500000000000000111022302462515654042363166809082031250000000000:t)
+  end
+
+We must then define the result of the application of ``nn_1_1`` on the inputs.
+The built-in function ``@@`` serves this purpose. Its type, ``nn -> vector 'a -> vector 'a``, describes what it does: given a neural network ``nn`` and an input vector ``x``, return the vector that is the result of the application of ``nn`` on ``x``.
+Note that thanks to type polymorphism, ``@@`` can be used to
+describe a variety of input vectors, including floating points, integers, or strings.
+We can finally define the output constraint
+we want to enforce on the first coordinate of the output vector that we use to
+model the advisory *COC*. We use the WhyML extension
+predicate ``has_length`` to further check that our inputs
+are of valid length.
 
 The final WhyML file looks like this:
 
 .. code-block:: whyml
 
   theory ACASXU_P1
-    use ACASXU_1_1.AsTuple
     use ieee_float.Float64
+    use int.Int
+    use interpretation.Vector
+    use interpretation.NeuralNetwork
+  
+    constant nn_1_1: nn = read_neural_network "nets/onnx/ACASXU_1_1.onnx" ONNX
 
-    goal P1_1_1: forall x0 x1 x2 x3 x4.
-       (0.5999999999999999777955395074968691915273666381835937500000000000:t) .<= x0 .<= (0.6798577687000000313588543576770462095737457275390625000000000000:t) ->
-       (-0.5:t) .<= x1 .<= (0.5:t) ->
-       (-0.5:t) .<= x2 .<= (0.5:t) ->
-       (0.4500000000000000111022302462515654042363166809082031250000000000:t) .<= x3 .<= (0.5:t) ->
-       (-0.5:t) .<= x4 .<= (-0.4500000000000000111022302462515654042363166809082031250000000000:t) ->
-       let (y0, _, _, _, _) = nn_apply x0 x1 x2 x3 x4 in
-       y0 .<= (3.9911256458999999630066213285317644476890563964843750000000000000:t)
+    predicate valid_input (i: vector t) =
+      (0.5999999999999999777955395074968691915273666381835937500000000000:t) .<= i[0] .<= (0.6798577687000000313588543576770462095737457275390625000000000000:t)
+      /\ (-0.5:t) .<= i[1] .<= (0.5:t)
+      /\ (-0.5:t) .<= i[2] .<= (0.5:t)
+      /\ (0.4500000000000000111022302462515654042363166809082031250000000000:t) .<= i[3] .<= (0.5:t)
+      /\ (-0.5:t) .<= i[4] .<= (-0.4500000000000000111022302462515654042363166809082031250000000000:t)
+  
+    goal P1_1_1:
+      forall i: vector t. has_length i 5 -> valid_input i ->
+        (nn_1_1@@i)[0] .<= (3.9911256458999999630066213285317644476890563964843750000000000000:t)
   end
 
 This file is available, as is, under the ``/examples/acasxu/`` folder as
@@ -280,10 +296,9 @@ However, these two solutions are not advisable in terms of clarity and
 maintainability.
 
 Reassuringly enough, WhyML provides all necessary features to come up with a
-better solution. First, WhyML allows for naming used (sub-)theories in order to
-distinguish identical logic symbols coming from different theories. This is
-critical for identifying the correct ``nn_apply`` symbols in the two
-verification goals we will define. Second, WhyML allows for the hypotheses on
+better solution. First, we can use the ``read_neural_network``
+extension as much as needed to represent distinct neural networks.
+Second, WhyML allows for the hypotheses on
 the floating-point constants modelling the neural network inputs to be exported
 from the verification goal into the theory general context as axioms.
 
@@ -292,42 +307,33 @@ In the end, the WhyML file looks like this:
 .. code-block:: whyml
 
   theory ACASXU_P3
-    use ACASXU_1_1.AsTuple as N11
-    use ACASXU_2_7.AsTuple as N27
     use ieee_float.Float64
-
-    constant x0:t
-    constant x1:t
-    constant x2:t
-    constant x3:t
-    constant x4:t
-
-    axiom H0:
-       (-0.3035311560999999769272506000561406835913658142089843750000000000:t) .<= x0 .<= (-0.2985528118999999924731980627257144078612327575683593750000000000:t)
-
-    axiom H1:
-       (-0.0095492965999999998572000947660853853449225425720214843750000000:t) .<= x1 .<= (0.0095492965999999998572000947660853853449225425720214843750000000:t)
-
-    axiom H2:
-       (0.4933803236000000036476365039561642333865165710449218750000000000:t) .<= x2 .<= (0.5:t)
-
-    axiom H3:
-       (0.2999999999999999888977697537484345957636833190917968750000000000:t) .<= x3 .<= (0.5:t)
-
-    axiom H4:
-       (0.2999999999999999888977697537484345957636833190917968750000000000:t) .<= x4 .<= (0.5:t)
-
+    use int.Int
+    use interpretation.Vector
+    use interpretation.NeuralNetwork
+  
+    constant nn_1_1: nn = read_neural_network "nets/onnx/ACASXU_1_1.onnx" ONNX
+    constant nn_2_7: nn = read_neural_network "nets/onnx/ACASXU_2_7.onnx" ONNX
+  
+    predicate valid_input (i: vector t) =
+      (-0.3035311560999999769272506000561406835913658142089843750000000000:t) .<= i[0] .<= (-0.2985528118999999924731980627257144078612327575683593750000000000:t)
+      /\ (-0.0095492965999999998572000947660853853449225425720214843750000000:t) .<= i[1] .<= (0.0095492965999999998572000947660853853449225425720214843750000000:t)
+      /\ (0.4933803236000000036476365039561642333865165710449218750000000000:t) .<= i[2] .<= (0.5:t)
+      /\ (0.2999999999999999888977697537484345957636833190917968750000000000:t) .<= i[3] .<= (0.5:t)
+      /\ (0.2999999999999999888977697537484345957636833190917968750000000000:t) .<= i[4] .<= (0.5:t)
+  
+    predicate is_min (o: vector t) (i: int) =
+      forall j: int. 0 <= j < 5 -> i <> j -> o[i] .<= o[j]
+  
     goal P3_1_1:
-       let (y0, y1, y2, y3, y4) = N11.nn_apply x0 x1 x2 x3 x4 in
-       y0 .>= y1 \/ y0 .>= y2 \/ y0 .>= y3 \/ y0 .>= y4
-
+      forall i: vector t. has_length i 5 -> valid_input i -> not (is_min (nn_1_1@@i) 0)
+  
     goal P3_2_7:
-       let (y0, y1, y2, y3, y4) = N27.nn_apply x0 x1 x2 x3 x4 in
-       y0 .>= y1 \/ y0 .>= y2 \/ y0 .>= y3 \/ y0 .>= y4
+      forall i: vector t. has_length i 5 -> valid_input i -> not (is_min (nn_2_7@@i) 0)
   end
 
 Note how the two verification goals ``P3_1_1`` and ``P3_2_7`` are clearly almost
-identical, but for the ``nn_apply`` logic symbol used, identifying respectively
+identical, but for the ``nn`` logic symbol used, identifying respectively
 the ``ACASXU_1_1.onnx`` and ``ACASXU_2_7.onnx`` neural networks.
 
 We can then verify the resulting verification problem as before:

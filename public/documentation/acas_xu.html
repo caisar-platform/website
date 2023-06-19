@@ -42,13 +42,13 @@ in <a class="reference internal" href="#manfredi2016" id="id1"><span>[Manfredi20
 signals for an aircraft in a situation where there is a potential for collision.
 In the rest of this tutorial, we will use the flavour ACAS-Xu defined in
 <a class="reference internal" href="#katz2017" id="id2"><span>[Katz2017]</span></a>, where the authors aim to verify a neural network implementing part
-of the ACAS-Xu specification. Its low dimensionality and well defined semantics
+of the ACAS-Xu specification. Its low dimensionality and well-defined semantics
 make it a <em>de facto</em> benchmark for machine learning verification.</p>
 <section id="use-case-presentation">
 <h2><span class="section-number">4.1.1. </span>Use case presentation<a class="headerlink" href="#use-case-presentation" title="Permalink to this headline">¶</a></h2>
 <p>The system considers a 2D plane with two entities: the monitored airplane (the
 “ownship”) and an incoming airplane (the “intruder”).</p>
-<a class="reference internal image-reference" href="images/acas_xu.png"><img alt="A schematic with two aircrafts, seen from above, displaying the relative angles of their trajectories" class="align-center" src="images/acas_xu.png" style="width: 272.5px; height: 180.5px;" /></a>
+<a class="reference internal image-reference" href="images/acas_xu.png"><img alt="A schematic with two aircraft, seen from above, displaying the relative angles of their trajectories" class="align-center" src="images/acas_xu.png" style="width: 272.5px; height: 180.5px;" /></a>
 <p>In the original implementation, the system state has seven inputs:</p>
 <ul class="simple">
 <li><p><span class="math notranslate nohighlight">\(v_{own}\)</span>: speed of ownship</p></li>
@@ -145,6 +145,14 @@ supports the Why3 specification language
 <a class="reference external" href="https://why3.lri.fr/doc/syntaxref.html">WhyML</a>, and inherits the Why3 standard
 library of logical theories (integer, float and real arithmetic, <em>etc.</em>) and
 basic programming data structures (arrays, queues, hash tables, <em>etc.</em>).</p>
+<p>Additionnaly, CAISAR extends WhyML by providing several builtins
+predicates and function symbols.
+The full extend of those additions will be documented in a future release.
+This example will use some of those undocumented extensions
+to display the capabilities of CAISAR; the wording “WhyML extensions” will be used when this happens.
+We believe those
+extensions are simple enough so that their meaning in the
+verification is transparent.</p>
 <p>Let us try to model the property <span class="math notranslate nohighlight">\(\phi_1\)</span> defined earlier. We will call
 our theory <code class="docutils literal notranslate"><span class="pre">ACASXU_P1</span></code>.</p>
 <p>We will need to write down some numerical values. As of now, CAISAR allows
@@ -160,69 +168,79 @@ precision floating-point numbers. We thus import it in our theory using the
 <span class="k">end</span>
 </pre></div>
 </div>
-<p>We would like to verify our propety given a certain neural network. To do this,
-CAISAR extends the Why3 standard library for recognizing neural networks in ONNX
-and NNet formats. Given a file of such formats, CAISAR internally builds a
-theory named as the original neural network file, that contains the sub-theories
-<code class="docutils literal notranslate"><span class="pre">AsTuple</span></code> and <code class="docutils literal notranslate"><span class="pre">AsArray</span></code> that provide logical symbols for describing the
-input-output interface of a neural network as tuples and array, respectively. We
-will only consider the <code class="docutils literal notranslate"><span class="pre">AsTuple</span></code> sub-theory for this tutorial.</p>
-<p>In particular, the theory built by CAISAR is equivalent to the following WhyML
-file:</p>
-<div class="highlight-whyml notranslate"><div class="highlight"><pre><span></span><span class="k">theory</span> <span class="n">NeuralNetworkFilename</span>
-  <span class="k">theory</span> <span class="n">AsTuple</span>
-    <span class="k">type</span> <span class="n">t</span>
-    <span class="c">(* Tuple with as many elements as there are input *)</span>
-    <span class="k">function</span> <span class="n">nn_apply</span> <span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">_</span><span class="p">,...)</span>
-    <span class="c">(* Tuple with as many elements as there are outputs *)</span>
-      <span class="p">:</span> <span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">_</span><span class="p">,...)</span>
-  <span class="k">end</span>
-  <span class="c">(* Other stuff *)</span>
-<span class="k">end</span>
-</pre></div>
-</div>
-<p>Note how the <code class="docutils literal notranslate"><span class="pre">AsTuple</span></code> theory defines the <code class="docutils literal notranslate"><span class="pre">nn_apply</span></code> function symbol that
-logically describes the input-output interface of a neural network using tuples.
-More importantly, CAISAR defines this function to take in input a tuple with as
-many elements as the inputs expected by the original neural network, and return
-a tuple with as many elements as the outputs provided by the original neural
-network.</p>
-<p>As our neural network takes five inputs and provides five outputs, adding <code class="docutils literal notranslate"><span class="pre">use</span>
-<span class="pre">filename.AsTuple</span></code> to our theory will provide a <code class="docutils literal notranslate"><span class="pre">nn_apply</span></code> function symbol
-that takes a five-elements tuple as input, and provides a five-elements tuple as
-output. Assuming we have a neural network named <code class="docutils literal notranslate"><span class="pre">ACASXU_1_1.onnx</span></code>, the WhyML
-file looks like this:</p>
+<p>We would like to verify our property given a certain neural network. To do this,
+CAISAR provide WhyML extensions to recognize and apply
+neural networks in ONNX and NNet formats on vector inputs.
+Given a file of such formats, CAISAR is able to provide the following:</p>
+<ul class="simple">
+<li><p>a logical symbol of type <code class="docutils literal notranslate"><span class="pre">nn</span></code>, built using the <code class="docutils literal notranslate"><span class="pre">read_neural_network</span></code> function, of type <code class="docutils literal notranslate"><span class="pre">string</span> <span class="pre">-&gt;</span> <span class="pre">format</span> <span class="pre">-&gt;</span> <span class="pre">nn</span></code>. The first argument is the path to the neural network file, <code class="docutils literal notranslate"><span class="pre">format</span></code> is either <code class="docutils literal notranslate"><span class="pre">ONNX</span></code> or <code class="docutils literal notranslate"><span class="pre">NNet</span></code>, and <code class="docutils literal notranslate"><span class="pre">nn</span></code> is the type of the neural network in WhyML;</p></li>
+<li><p>a function symbol that returns the output of the application of the neural network to a given input;</p></li>
+<li><p>types and predicates to manipulate inputs vectors;</p></li>
+</ul>
+<p>The full reference for those WhyML extensions is available under the
+<a class="reference external" href="https://git.frama-c.com/pub/caisar/-/blob/master/stdlib/interpretation.mlw">stdlib/interpretation.mlw</a> file. To create a logical symbol for a neural network located in “nets/onnx/ACASXU_1_1.onnx”, we can import the relevant theories in our file and use the <code class="docutils literal notranslate"><span class="pre">read_neural_network</span></code> function symbol like this:</p>
 <div class="highlight-whyml notranslate"><div class="highlight"><pre><span></span><span class="k">theory</span> <span class="n">ACASXU_P1</span>
-  <span class="k">use</span> <span class="n">ACASXU_1_1</span><span class="p">.</span><span class="n">AsTuple</span>
   <span class="k">use</span> <span class="n">ieee_float</span><span class="p">.</span><span class="n">Float64</span>
+  <span class="k">use</span> <span class="n">interpretation</span><span class="p">.</span><span class="n">Vector</span>
+  <span class="k">use</span> <span class="n">interpretation</span><span class="p">.</span><span class="n">NeuralNetwork</span>
+
+  <span class="k">constant</span> <span class="n">nn_1_1</span><span class="p">:</span> <span class="n">nn</span> <span class="o">=</span> <span class="n">read_neural_network</span> <span class="s2">&quot;nets/onnx/ACASXU_1_1.onnx&quot;</span> <span class="n">ONNX</span>
 <span class="k">end</span>
 </pre></div>
 </div>
 <p>Now is the time to define our verification goal, that will call <code class="docutils literal notranslate"><span class="pre">P1_1_1</span></code> for
-property <span class="math notranslate nohighlight">\(\phi_1\)</span> on neural network <span class="math notranslate nohighlight">\(N_{1,1}\)</span>.</p>
-<p>We first model the inputs of the neural network <span class="math notranslate nohighlight">\(\rho, \theta, \psi,
+property <span class="math notranslate nohighlight">\(\phi_1\)</span> on neural network <span class="math notranslate nohighlight">\(N_{1,1}\)</span>.
+We first model the inputs of the neural network <span class="math notranslate nohighlight">\(\rho, \theta, \psi,
 v_{own}, v_{int}\)</span> respectively as the floating-points constants <span class="math notranslate nohighlight">\(x_i\)</span> for
-<span class="math notranslate nohighlight">\(i \in [0..4]\)</span>. Moreover, we constraint these to the range of
+<span class="math notranslate nohighlight">\(i \in [0..4]\)</span>. Moreover, we constrain these to the range of
 floating-point values each may take. According to the original authors, values
 were normalized during the training of the network, and so we adapt the values
-they provide in their <a class="reference external" href="https://github.com/NeuralNetworkVerification/Marabou/tree/master/resources/properties">repository</a>.
-Then, we define the result of the application of <code class="docutils literal notranslate"><span class="pre">net_apply</span></code> on the inputs by
-taking advantage of the WhyML pattern-matching, and define the output constraint
-we want to enforce on the floating-point constant <span class="math notranslate nohighlight">\(y_0\)</span> that we use to
-model the advisory <em>COC</em>.</p>
+they provide in their <a class="reference external" href="https://github.com/NeuralNetworkVerification/Marabou/tree/master/resources/properties">repository</a>. Since we will manipulate integer indexes, we require the use of the <code class="docutils literal notranslate"><span class="pre">int.Int</span></code> Why3 library. We can write that as a predicate for clarity:</p>
+<div class="highlight-whyml notranslate"><div class="highlight"><pre><span></span><span class="k">theory</span> <span class="n">ACASXU_P1</span>
+  <span class="k">use</span> <span class="n">ieee_float</span><span class="p">.</span><span class="n">Float64</span>
+  <span class="k">use</span> <span class="n">int</span><span class="p">.</span><span class="n">Int</span>
+  <span class="k">use</span> <span class="n">interpretation</span><span class="p">.</span><span class="n">Vector</span>
+  <span class="k">use</span> <span class="n">interpretation</span><span class="p">.</span><span class="n">NeuralNetwork</span>
+
+  <span class="k">constant</span> <span class="n">nn_1_1</span><span class="p">:</span> <span class="n">nn</span> <span class="o">=</span> <span class="n">read_neural_network</span> <span class="s2">&quot;nets/onnx/ACASXU_1_1.onnx&quot;</span> <span class="n">ONNX</span>
+
+  <span class="k">predicate</span> <span class="n">valid_input</span> <span class="p">(</span><span class="n">i</span><span class="p">:</span> <span class="n">vector</span> <span class="n">t</span><span class="p">)</span> <span class="o">=</span>
+    <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">5999999999999999777955395074968691915273666381835937500000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">6798577687000000313588543576770462095737457275390625000000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
+    <span class="o">/\</span> <span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">i</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
+    <span class="o">/\</span> <span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">i</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
+    <span class="o">/\</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">4500000000000000111022302462515654042363166809082031250000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">i</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
+    <span class="o">/\</span> <span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">i</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">4500000000000000111022302462515654042363166809082031250000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
+<span class="k">end</span>
+</pre></div>
+</div>
+<p>We must then define the result of the application of <code class="docutils literal notranslate"><span class="pre">nn_1_1</span></code> on the inputs.
+The built-in function <code class="docutils literal notranslate"><span class="pre">&#64;&#64;</span></code> serves this purpose. Its type, <code class="docutils literal notranslate"><span class="pre">nn</span> <span class="pre">-&gt;</span> <span class="pre">vector</span> <span class="pre">'a</span> <span class="pre">-&gt;</span> <span class="pre">vector</span> <span class="pre">'a</span></code>, describes what it does: given a neural network <code class="docutils literal notranslate"><span class="pre">nn</span></code> and an input vector <code class="docutils literal notranslate"><span class="pre">x</span></code>, return the vector that is the result of the application of <code class="docutils literal notranslate"><span class="pre">nn</span></code> on <code class="docutils literal notranslate"><span class="pre">x</span></code>.
+Note that thanks to type polymorphism, <code class="docutils literal notranslate"><span class="pre">&#64;&#64;</span></code> can be used to
+describe a variety of input vectors, including floating points, integers, or strings.
+We can finally define the output constraint
+we want to enforce on the first coordinate of the output vector that we use to
+model the advisory <em>COC</em>. We use the WhyML extension
+predicate <code class="docutils literal notranslate"><span class="pre">has_length</span></code> to further check that our inputs
+are of valid length.</p>
 <p>The final WhyML file looks like this:</p>
 <div class="highlight-whyml notranslate"><div class="highlight"><pre><span></span><span class="k">theory</span> <span class="n">ACASXU_P1</span>
-  <span class="k">use</span> <span class="n">ACASXU_1_1</span><span class="p">.</span><span class="n">AsTuple</span>
   <span class="k">use</span> <span class="n">ieee_float</span><span class="p">.</span><span class="n">Float64</span>
+  <span class="k">use</span> <span class="n">int</span><span class="p">.</span><span class="n">Int</span>
+  <span class="k">use</span> <span class="n">interpretation</span><span class="p">.</span><span class="n">Vector</span>
+  <span class="k">use</span> <span class="n">interpretation</span><span class="p">.</span><span class="n">NeuralNetwork</span>
 
-  <span class="k">goal</span> <span class="n">P1_1_1</span><span class="p">:</span> <span class="k">forall</span> <span class="n">x0</span> <span class="n">x1</span> <span class="n">x2</span> <span class="n">x3</span> <span class="n">x4</span><span class="p">.</span>
-     <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">5999999999999999777955395074968691915273666381835937500000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">x0</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">6798577687000000313588543576770462095737457275390625000000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="o">-&gt;</span>
-     <span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">x1</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="o">-&gt;</span>
-     <span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">x2</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="o">-&gt;</span>
-     <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">4500000000000000111022302462515654042363166809082031250000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">x3</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="o">-&gt;</span>
-     <span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">x4</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">4500000000000000111022302462515654042363166809082031250000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="o">-&gt;</span>
-     <span class="k">let</span> <span class="p">(</span><span class="n">y0</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="n">nn_apply</span> <span class="n">x0</span> <span class="n">x1</span> <span class="n">x2</span> <span class="n">x3</span> <span class="n">x4</span> <span class="k">in</span>
-     <span class="n">y0</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">.</span><span class="mi">9911256458999999630066213285317644476890563964843750000000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
+  <span class="k">constant</span> <span class="n">nn_1_1</span><span class="p">:</span> <span class="n">nn</span> <span class="o">=</span> <span class="n">read_neural_network</span> <span class="s2">&quot;nets/onnx/ACASXU_1_1.onnx&quot;</span> <span class="n">ONNX</span>
+
+  <span class="k">predicate</span> <span class="n">valid_input</span> <span class="p">(</span><span class="n">i</span><span class="p">:</span> <span class="n">vector</span> <span class="n">t</span><span class="p">)</span> <span class="o">=</span>
+    <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">5999999999999999777955395074968691915273666381835937500000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">6798577687000000313588543576770462095737457275390625000000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
+    <span class="o">/\</span> <span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">i</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
+    <span class="o">/\</span> <span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">i</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
+    <span class="o">/\</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">4500000000000000111022302462515654042363166809082031250000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">i</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
+    <span class="o">/\</span> <span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">i</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">4500000000000000111022302462515654042363166809082031250000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
+
+  <span class="k">goal</span> <span class="n">P1_1_1</span><span class="p">:</span>
+    <span class="k">forall</span> <span class="n">i</span><span class="p">:</span> <span class="n">vector</span> <span class="n">t</span><span class="p">.</span> <span class="n">has_length</span> <span class="n">i</span> <span class="mi">5</span> <span class="o">-&gt;</span> <span class="n">valid_input</span> <span class="n">i</span> <span class="o">-&gt;</span>
+      <span class="p">(</span><span class="n">nn_1_1</span><span class="err">@@</span><span class="n">i</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">.</span><span class="mi">9911256458999999630066213285317644476890563964843750000000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
 <span class="k">end</span>
 </pre></div>
 </div>
@@ -283,51 +301,41 @@ verification goals or two entirely distinct theories in a same WhyML file.
 However, these two solutions are not advisable in terms of clarity and
 maintainability.</p>
 <p>Reassuringly enough, WhyML provides all necessary features to come up with a
-better solution. First, WhyML allows for naming used (sub-)theories in order to
-distinguish identical logic symbols coming from different theories. This is
-critical for identifying the correct <code class="docutils literal notranslate"><span class="pre">nn_apply</span></code> symbols in the two
-verification goals we will define. Second, WhyML allows for the hypotheses on
+better solution. First, we can use the <code class="docutils literal notranslate"><span class="pre">read_neural_network</span></code>
+extension as much as needed to represent distinct neural networks.
+Second, WhyML allows for the hypotheses on
 the floating-point constants modelling the neural network inputs to be exported
 from the verification goal into the theory general context as axioms.</p>
 <p>In the end, the WhyML file looks like this:</p>
 <div class="highlight-whyml notranslate"><div class="highlight"><pre><span></span><span class="k">theory</span> <span class="n">ACASXU_P3</span>
-  <span class="k">use</span> <span class="n">ACASXU_1_1</span><span class="p">.</span><span class="n">AsTuple</span> <span class="k">as</span> <span class="n">N11</span>
-  <span class="k">use</span> <span class="n">ACASXU_2_7</span><span class="p">.</span><span class="n">AsTuple</span> <span class="k">as</span> <span class="n">N27</span>
   <span class="k">use</span> <span class="n">ieee_float</span><span class="p">.</span><span class="n">Float64</span>
+  <span class="k">use</span> <span class="n">int</span><span class="p">.</span><span class="n">Int</span>
+  <span class="k">use</span> <span class="n">interpretation</span><span class="p">.</span><span class="n">Vector</span>
+  <span class="k">use</span> <span class="n">interpretation</span><span class="p">.</span><span class="n">NeuralNetwork</span>
 
-  <span class="k">constant</span> <span class="n">x0</span><span class="p">:</span><span class="n">t</span>
-  <span class="k">constant</span> <span class="n">x1</span><span class="p">:</span><span class="n">t</span>
-  <span class="k">constant</span> <span class="n">x2</span><span class="p">:</span><span class="n">t</span>
-  <span class="k">constant</span> <span class="n">x3</span><span class="p">:</span><span class="n">t</span>
-  <span class="k">constant</span> <span class="n">x4</span><span class="p">:</span><span class="n">t</span>
+  <span class="k">constant</span> <span class="n">nn_1_1</span><span class="p">:</span> <span class="n">nn</span> <span class="o">=</span> <span class="n">read_neural_network</span> <span class="s2">&quot;nets/onnx/ACASXU_1_1.onnx&quot;</span> <span class="n">ONNX</span>
+  <span class="k">constant</span> <span class="n">nn_2_7</span><span class="p">:</span> <span class="n">nn</span> <span class="o">=</span> <span class="n">read_neural_network</span> <span class="s2">&quot;nets/onnx/ACASXU_2_7.onnx&quot;</span> <span class="n">ONNX</span>
 
-  <span class="k">axiom</span> <span class="n">H0</span><span class="p">:</span>
-     <span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">3035311560999999769272506000561406835913658142089843750000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">x0</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">2985528118999999924731980627257144078612327575683593750000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
+  <span class="k">predicate</span> <span class="n">valid_input</span> <span class="p">(</span><span class="n">i</span><span class="p">:</span> <span class="n">vector</span> <span class="n">t</span><span class="p">)</span> <span class="o">=</span>
+    <span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">3035311560999999769272506000561406835913658142089843750000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">2985528118999999924731980627257144078612327575683593750000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
+    <span class="o">/\</span> <span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">0095492965999999998572000947660853853449225425720214843750000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">i</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">0095492965999999998572000947660853853449225425720214843750000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
+    <span class="o">/\</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">4933803236000000036476365039561642333865165710449218750000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">i</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
+    <span class="o">/\</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">2999999999999999888977697537484345957636833190917968750000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">i</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
+    <span class="o">/\</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">2999999999999999888977697537484345957636833190917968750000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">i</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
 
-  <span class="k">axiom</span> <span class="n">H1</span><span class="p">:</span>
-     <span class="p">(</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">0095492965999999998572000947660853853449225425720214843750000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">x1</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">0095492965999999998572000947660853853449225425720214843750000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
-
-  <span class="k">axiom</span> <span class="n">H2</span><span class="p">:</span>
-     <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">4933803236000000036476365039561642333865165710449218750000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">x2</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
-
-  <span class="k">axiom</span> <span class="n">H3</span><span class="p">:</span>
-     <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">2999999999999999888977697537484345957636833190917968750000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">x3</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
-
-  <span class="k">axiom</span> <span class="n">H4</span><span class="p">:</span>
-     <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">2999999999999999888977697537484345957636833190917968750000000000</span><span class="p">:</span><span class="n">t</span><span class="p">)</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">x4</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">5</span><span class="p">:</span><span class="n">t</span><span class="p">)</span>
+  <span class="k">predicate</span> <span class="n">is_min</span> <span class="p">(</span><span class="n">o</span><span class="p">:</span> <span class="n">vector</span> <span class="n">t</span><span class="p">)</span> <span class="p">(</span><span class="n">i</span><span class="p">:</span> <span class="n">int</span><span class="p">)</span> <span class="o">=</span>
+    <span class="k">forall</span> <span class="n">j</span><span class="p">:</span> <span class="n">int</span><span class="p">.</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="mi">5</span> <span class="o">-&gt;</span> <span class="n">i</span> <span class="o">&lt;&gt;</span> <span class="n">j</span> <span class="o">-&gt;</span> <span class="n">o</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">.</span><span class="o">&lt;=</span> <span class="n">o</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
 
   <span class="k">goal</span> <span class="n">P3_1_1</span><span class="p">:</span>
-     <span class="k">let</span> <span class="p">(</span><span class="n">y0</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">y3</span><span class="p">,</span> <span class="n">y4</span><span class="p">)</span> <span class="o">=</span> <span class="n">N11</span><span class="p">.</span><span class="n">nn_apply</span> <span class="n">x0</span> <span class="n">x1</span> <span class="n">x2</span> <span class="n">x3</span> <span class="n">x4</span> <span class="k">in</span>
-     <span class="n">y0</span> <span class="p">.</span><span class="o">&gt;=</span> <span class="n">y1</span> <span class="o">\/</span> <span class="n">y0</span> <span class="p">.</span><span class="o">&gt;=</span> <span class="n">y2</span> <span class="o">\/</span> <span class="n">y0</span> <span class="p">.</span><span class="o">&gt;=</span> <span class="n">y3</span> <span class="o">\/</span> <span class="n">y0</span> <span class="p">.</span><span class="o">&gt;=</span> <span class="n">y4</span>
+    <span class="k">forall</span> <span class="n">i</span><span class="p">:</span> <span class="n">vector</span> <span class="n">t</span><span class="p">.</span> <span class="n">has_length</span> <span class="n">i</span> <span class="mi">5</span> <span class="o">-&gt;</span> <span class="n">valid_input</span> <span class="n">i</span> <span class="o">-&gt;</span> <span class="k">not</span> <span class="p">(</span><span class="n">is_min</span> <span class="p">(</span><span class="n">nn_1_1</span><span class="err">@@</span><span class="n">i</span><span class="p">)</span> <span class="mi">0</span><span class="p">)</span>
 
   <span class="k">goal</span> <span class="n">P3_2_7</span><span class="p">:</span>
-     <span class="k">let</span> <span class="p">(</span><span class="n">y0</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">y3</span><span class="p">,</span> <span class="n">y4</span><span class="p">)</span> <span class="o">=</span> <span class="n">N27</span><span class="p">.</span><span class="n">nn_apply</span> <span class="n">x0</span> <span class="n">x1</span> <span class="n">x2</span> <span class="n">x3</span> <span class="n">x4</span> <span class="k">in</span>
-     <span class="n">y0</span> <span class="p">.</span><span class="o">&gt;=</span> <span class="n">y1</span> <span class="o">\/</span> <span class="n">y0</span> <span class="p">.</span><span class="o">&gt;=</span> <span class="n">y2</span> <span class="o">\/</span> <span class="n">y0</span> <span class="p">.</span><span class="o">&gt;=</span> <span class="n">y3</span> <span class="o">\/</span> <span class="n">y0</span> <span class="p">.</span><span class="o">&gt;=</span> <span class="n">y4</span>
+    <span class="k">forall</span> <span class="n">i</span><span class="p">:</span> <span class="n">vector</span> <span class="n">t</span><span class="p">.</span> <span class="n">has_length</span> <span class="n">i</span> <span class="mi">5</span> <span class="o">-&gt;</span> <span class="n">valid_input</span> <span class="n">i</span> <span class="o">-&gt;</span> <span class="k">not</span> <span class="p">(</span><span class="n">is_min</span> <span class="p">(</span><span class="n">nn_2_7</span><span class="err">@@</span><span class="n">i</span><span class="p">)</span> <span class="mi">0</span><span class="p">)</span>
 <span class="k">end</span>
 </pre></div>
 </div>
 <p>Note how the two verification goals <code class="docutils literal notranslate"><span class="pre">P3_1_1</span></code> and <code class="docutils literal notranslate"><span class="pre">P3_2_7</span></code> are clearly almost
-identical, but for the <code class="docutils literal notranslate"><span class="pre">nn_apply</span></code> logic symbol used, identifying respectively
+identical, but for the <code class="docutils literal notranslate"><span class="pre">nn</span></code> logic symbol used, identifying respectively
 the <code class="docutils literal notranslate"><span class="pre">ACASXU_1_1.onnx</span></code> and <code class="docutils literal notranslate"><span class="pre">ACASXU_2_7.onnx</span></code> neural networks.</p>
 <p>We can then verify the resulting verification problem as before:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>caisar verify --prover Marabou -L examples/acasxu/nets/onnx --format whyml examples/acasxu/property_3.why -t 10m
