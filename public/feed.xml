@@ -1,4 +1,37 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.2">Jekyll</generator><link href="https://caisar-platform.github.io/website/feed.xml" rel="self" type="application/atom+xml" /><link href="https://caisar-platform.github.io/website/" rel="alternate" type="text/html" /><updated>2023-06-19T20:34:08+00:00</updated><id>https://caisar-platform.github.io/website/feed.xml</id><title type="html">CAISAR Website</title><subtitle>Website for the CAISAR platform</subtitle><entry><title type="html">Presentation at JFLA</title><link href="https://caisar-platform.github.io/website/2023/02/03/jfla.html" rel="alternate" type="text/html" title="Presentation at JFLA" /><published>2023-02-03T00:00:00+00:00</published><updated>2023-02-03T00:00:00+00:00</updated><id>https://caisar-platform.github.io/website/2023/02/03/jfla</id><content type="html" xml:base="https://caisar-platform.github.io/website/2023/02/03/jfla.html"><![CDATA[<h1 id="caisar-featured-during-jfla">CAISAR featured during JFLA</h1>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.2">Jekyll</generator><link href="https://caisar-platform.github.io/website/feed.xml" rel="self" type="application/atom+xml" /><link href="https://caisar-platform.github.io/website/" rel="alternate" type="text/html" /><updated>2023-06-20T16:53:12+00:00</updated><id>https://caisar-platform.github.io/website/feed.xml</id><title type="html">CAISAR Website</title><subtitle>Website for the CAISAR platform</subtitle><entry><title type="html">CAISAR 0.2 released</title><link href="https://caisar-platform.github.io/website/2023/06/20/release-0.2.html" rel="alternate" type="text/html" title="CAISAR 0.2 released" /><published>2023-06-20T00:00:00+00:00</published><updated>2023-06-20T00:00:00+00:00</updated><id>https://caisar-platform.github.io/website/2023/06/20/release-0.2</id><content type="html" xml:base="https://caisar-platform.github.io/website/2023/06/20/release-0.2.html"><![CDATA[<h1 id="caisar-release">CAISAR release</h1>
+<p>We are happy to announce the release of CAISAR 0.2, to celebrate the 234th birthday of the <a href="https://fr.wikipedia.org/wiki/Serment_du_Jeu_de_paume">Serment du jeu de Paume</a>. On this day, courageous people took a vow to abolish autocracy and fight for their rights.
+This release is the result of more than one year of work.
+Here are some of the most prominent changes that we are
+happy to share.
+The release is available under our <a href="https://git.frama-c.com/pub/caisar/">gitlab</a>, on <a href="https://opam.ocaml.org/packages/caisar/">opam</a> and on <a href="https://hub.docker.com/r/laiser/caisar">Dockerhub</a>.</p>
+
+<h2 id="new-prover-support">New prover support</h2>
+<p>We added the support of several provers:</p>
+
+<ul>
+  <li>the <a href="https://github.com/stanleybak/nnenum">alpha-beta-CROWN</a> prover; winner of the 2021 and 2022 edition of the VNN-COMP</li>
+  <li>the <a href="https://github.com/stanleybak/nnenum">nnenum</a> prover</li>
+  <li>the AIMOS metamorphic testing prover, for now internally
+developped at CEA</li>
+</ul>
+
+<p>We also added support to the <a href="https://www.vnnlib.org/">VNNLib</a> standard. In the future, adding a VNNLib compliant prover to CAISAR would only require to edit two small files, which is a huge step towards integrating more provers.
+This also results in supporting all solvers that support the
+SMTLIB2 language (which VNNLib is a subset of). We
+implemented a custom transformation in CAISAR that
+automatically translates the neural network control flow
+into a SMT formula. This custom transformation had been
+tested for the <a href="https://cvc5.github.io/">CVC5 solver</a>.</p>
+
+<h2 id="manual">Manual</h2>
+
+<p>The first version of the CAISAR manual is available under the <a href="/website/documentation/">documentation</a> section of the website. It includes detailed installation instructions, a synopsis of common commands and two tutorials on classical benchmarks. The current version of those tutorials make use of experimental features that we plan to document in a future release. We hope this manual will provide a good entry point to CAISAR, and formal verification of machine learning programs at large.</p>
+
+<h2 id="usability">Usability</h2>
+
+<p>We added various utilities to make CAISAR slicker to use,
+such as several logging options, verification through a JSON
+file, and reworked help messages.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[CAISAR release We are happy to announce the release of CAISAR 0.2, to celebrate the 234th birthday of the Serment du jeu de Paume. On this day, courageous people took a vow to abolish autocracy and fight for their rights. This release is the result of more than one year of work. Here are some of the most prominent changes that we are happy to share. The release is available under our gitlab, on opam and on Dockerhub.]]></summary></entry><entry><title type="html">Presentation at JFLA</title><link href="https://caisar-platform.github.io/website/2023/02/03/jfla.html" rel="alternate" type="text/html" title="Presentation at JFLA" /><published>2023-02-03T00:00:00+00:00</published><updated>2023-02-03T00:00:00+00:00</updated><id>https://caisar-platform.github.io/website/2023/02/03/jfla</id><content type="html" xml:base="https://caisar-platform.github.io/website/2023/02/03/jfla.html"><![CDATA[<h1 id="caisar-featured-during-jfla">CAISAR featured during JFLA</h1>
 
 <p>The JFLA (French for <em>Journées Francophones des Langages
 Applicatifs</em>) is a yearly meeting of both academics and

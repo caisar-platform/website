@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" contents="CAISAR">
+    <title>CAISAR</title>
+    <link rel="stylesheet" href="/website/assets/css/bulma.css">
+    <link rel="stylesheet" href="/website/assets/css/main.css">
+    <link rel="shortcut icon" href="/website/assets/images/caisar-logo-transparent.png" type="image/x-icon">
+  </head>
+
+  <body>
+    <nav class="navbar is-fixed-top">
+	<div id="navbarCAISAR" class="navbar-menu">
+		<div class="navbar-start">
+			<a class="navbar-item"
+				href="/website/" class="pure-menu-link">Home</a>
+			<a class="navbar-item"
+				href="/website/documentation" class="pure-menu-link">Documentation</a>
+			<a class="navbar-item"
+				href="/website/positions" class="pure-menu-link">Open positions</a>
+			<a class="navbar-item"
+				href="/website/contact" class="pure-menu-link">Contact</a>
+			<a class="navbar-item"
+				href="/website/news" class="pure-menu-link">What's new?</a>
+		</div>
+	</div>
+	
+	<div class="navbar-brand">
+		<a class="navbar-item logo-top"
+			href="https://git.frama-c.com/pub/caisar/"><strong><img src="/website/assets/images/gitlab-logo.png"></strong></a>
+		
+		</a>
+	</div>
+</nav>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  // Get all "navbar-burger" elements
+  const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+
+  // Check if there are any navbar burgers
+  if ($navbarBurgers.length > 0) {
+
+    // Add a click event on each of them
+    $navbarBurgers.forEach( el => {
+      el.addEventListener('click', () => {
+
+        // Get the target from the "data-target" attribute
+        const target = el.dataset.target;
+        const $target = document.getElementById(target);
+
+        // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+        el.classList.toggle('is-active');
+        $target.classList.toggle('is-active');
+
+      });
+    });
+  }
+
+});
+</script>
+
+	<div class="content">
+	<h1 id="caisar-release">CAISAR release</h1>
+<p>We are happy to announce the release of CAISAR 0.2, to celebrate the 234th birthday of the <a href="https://fr.wikipedia.org/wiki/Serment_du_Jeu_de_paume">Serment du jeu de Paume</a>. On this day, courageous people took a vow to abolish autocracy and fight for their rights.
+This release is the result of more than one year of work.
+Here are some of the most prominent changes that we are
+happy to share.
+The release is available under our <a href="https://git.frama-c.com/pub/caisar/">gitlab</a>, on <a href="https://opam.ocaml.org/packages/caisar/">opam</a> and on <a href="https://hub.docker.com/r/laiser/caisar">Dockerhub</a>.</p>
+
+<h2 id="new-prover-support">New prover support</h2>
+<p>We added the support of several provers:</p>
+
+<ul>
+  <li>the <a href="https://github.com/stanleybak/nnenum">alpha-beta-CROWN</a> prover; winner of the 2021 and 2022 edition of the VNN-COMP</li>
+  <li>the <a href="https://github.com/stanleybak/nnenum">nnenum</a> prover</li>
+  <li>the AIMOS metamorphic testing prover, for now internally
+developped at CEA</li>
+</ul>
+
+<p>We also added support to the <a href="https://www.vnnlib.org/">VNNLib</a> standard. In the future, adding a VNNLib compliant prover to CAISAR would only require to edit two small files, which is a huge step towards integrating more provers.
+This also results in supporting all solvers that support the
+SMTLIB2 language (which VNNLib is a subset of). We
+implemented a custom transformation in CAISAR that
+automatically translates the neural network control flow
+into a SMT formula. This custom transformation had been
+tested for the <a href="https://cvc5.github.io/">CVC5 solver</a>.</p>
+
+<h2 id="manual">Manual</h2>
+
+<p>The first version of the CAISAR manual is available under the <a href="/website/documentation/">documentation</a> section of the website. It includes detailed installation instructions, a synopsis of common commands and two tutorials on classical benchmarks. The current version of those tutorials make use of experimental features that we plan to document in a future release. We hope this manual will provide a good entry point to CAISAR, and formal verification of machine learning programs at large.</p>
+
+<h2 id="usability">Usability</h2>
+
+<p>We added various utilities to make CAISAR slicker to use,
+such as several logging options, verification through a JSON
+file, and reworked help messages.</p>
+
+
+	</div>
+    <footer class="footer">
+	<div class="footer-block">
+        	<p class="image is-128x128">
+			<img src="/website/assets/images/caisar-logo.png">
+		</p>
+        	<div class="copyright is-size-7">
+			<span>
+				Copyright © 2021-2023 CAISAR.
+				All Rights Reserved.
+			</span>
+		</div>
+	</div>
+</footer>
+
+  </body>
+
+</html>
